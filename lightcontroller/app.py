@@ -170,9 +170,9 @@ def main():
     b = Button(27, pull_up=False)
     c = Button(22, pull_up=False)
 
-    a.when_pressed = light_toggle
+    c.when_pressed = light_toggle
     # b.when_pressed = lights_on
-    c.when_pressed = party_mode
+    a.when_pressed = party_mode
 
     # lifx.set_color_all_lights([hue, saturation, brightness, temperature ], 2000, True)
 
