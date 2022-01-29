@@ -1,0 +1,7 @@
+#!/bin/bash
+
+poetry build
+sudo pip3 install dist/lightcontroller-0.1.0-py3-none-any.whl
+
+sudo systemctl daemon-reload
+sudo systemctl restart lightcontroller-daemon.service

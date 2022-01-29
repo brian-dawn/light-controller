@@ -15,3 +15,4 @@ Make sure the install step is done outside of `poetry shell`:
 	sudo systemctl status lightcontroller-daemon.service
 	sudo systemctl start lightcontroller-daemon.service
 	sudo systemctl stop lightcontroller-daemon.service
+	sudo systemctl daemon-reload
