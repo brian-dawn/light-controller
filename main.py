@@ -3,8 +3,9 @@
 import sys
 from time import sleep
 
-from lifxlan import BLUE, CYAN, GREEN, LifxLAN, ORANGE, PINK, PURPLE, RED, YELLOW
+from lifxlan import LifxLAN, WHITE, BLUE
 
+from lifxlan.msgtypes import LightSetColor
 
 def main():
     num_lights = None
@@ -20,37 +21,18 @@ def main():
     # simply makes initial bulb discovery faster.
     print("Discovering lights...")
     lifx = LifxLAN(num_lights)
-
-    original_colors = lifx.get_color_all_lights()
-    original_powers = lifx.get_power_all_lights()
-
-    print("Turning on all lights...")
     lifx.set_power_all_lights(True)
-    sleep(1)
 
-    print("Flashy fast rainbow")
-    rainbow(lifx, 0.1)
+    hue = 0 # 0 to 65535
+    saturation = 0 # 0 to 65535
+    brightness = 65535 # 0 to 65535
+    temperature = 2500 # 2500 to 9000
 
-    print("Smooth slow rainbow")
-    rainbow(lifx, 1, smooth=True)
+    lifx.set_color_all_lights([hue, saturation, brightness, temperature ], 2000, True)
 
-    print("Restoring original color to all lights...")
-    for light in original_colors:
-        light.set_color(original_colors[light])
 
-    sleep(1)
 
-    print("Restoring original power to all lights...")
-    for light in original_powers:
-        light.set_power(original_powers[light])
 
-def rainbow(lan, duration_secs=0.5, smooth=False):
-    colors = [RED, ORANGE, YELLOW, GREEN, CYAN, BLUE, PURPLE, PINK]
-    transition_time_ms = duration_secs*1000 if smooth else 0
-    rapid = True if duration_secs < 1 else False
-    for color in colors:
-        lan.set_color_all_lights(color, transition_time_ms, rapid)
-        sleep(duration_secs)
 
 if __name__=="__main__":
     main()
