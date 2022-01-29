@@ -8,6 +8,7 @@ authors = ["Brian Dawn <brian.t.dawn@gmail.com>"]
 python = "^3.7"
 black = "^21.12b0"
 lifxlan = "^1.2.7"
+gpiozero = "^1.6.2"
 
 [tool.poetry.dev-dependencies]
 
