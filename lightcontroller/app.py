@@ -11,6 +11,7 @@ from lifxlan import LifxLAN, WHITE, BLUE
 from lifxlan.msgtypes import LightSetColor
 from gpiozero import Button
 
+
 def parse_time(s: str) -> int:
     """
     Given a date string e.g. 8:30pm 3:00am return the seconds
@@ -37,14 +38,14 @@ def parse_time(s: str) -> int:
 sunrise = parse_time("6:00am")
 sunset = parse_time("10:00pm")
 
-print('sunrise: '+str(sunrise))
-print('sunset: '+str(sunset))
+print("sunrise: " + str(sunrise))
+print("sunset: " + str(sunset))
 
 
-transition_seconds = 60 * 30 # 30 minutes
+transition_seconds = 60 * 30  # 30 minutes
 
 # When a user presses a button we will stop doing sun updates.
-cooldown_time_in_seconds = 60 * 60 # one hour
+cooldown_time_in_seconds = 60 * 60  # one hour
 
 sun_max_temp = 4500
 sun_min_temp = 2500
@@ -57,7 +58,6 @@ def seconds_since_midnight() -> int:
         now - now.replace(hour=0, minute=0, second=0, microsecond=0)
     ).total_seconds()
     return seconds_since_midnight
-
 
 
 lifx = LifxLAN()
@@ -76,12 +76,14 @@ last_button_press_time = 0
 
 party_start_time = 0
 
+
 def any_button_press():
     """
     Reset state
     """
     global party_start_time
     party_start_time = 0
+
 
 def light_toggle():
     global brightness, saturation, hue, temperature, last_button_press_time
@@ -112,9 +114,6 @@ def party_mode():
     # brightness = 65535  # 0 to 65535
 
     # lifx.set_color_all_lights([hue, saturation, brightness, temperature], 500, True)
-
-
-
 
 
 def sunrise_temperature_over_time(seconds_since_midnight, sunrise_time):
@@ -150,11 +149,13 @@ def temp_over_time(seconds_since_midnight, sunrise_seconds, sunset_seconds):
     )
 
 
-
 def brightness_over_time(seconds_since_midnight, sunrise_seconds, sunset_seconds):
 
     return 65535 * (
-        (temp_over_time(seconds_since_midnight, sunrise_seconds, sunset_seconds) - sun_min_temp)
+        (
+            temp_over_time(seconds_since_midnight, sunrise_seconds, sunset_seconds)
+            - sun_min_temp
+        )
         / (sun_max_temp - sun_min_temp)
     )
 
@@ -181,14 +182,16 @@ def main():
 
         # Party mode only lasts for an hour
         if time() - party_start_time < 60 * 60:
-            print('party time')
-            
+            print("party time")
+
             hue = int(time() * 4000 % 65535)
             saturation = 65535
             brightness = 65535
             temperature = 0
 
-            lifx.set_color_all_lights([hue, saturation, brightness, temperature], 1000, True)
+            lifx.set_color_all_lights(
+                [hue, saturation, brightness, temperature], 1000, True
+            )
             continue
 
         # If we pressed a button and the cooldown time hasn't passed then we won't
@@ -199,7 +202,7 @@ def main():
 
         # Handle sunrise/sunset.
         current_time = seconds_since_midnight()
-        #current_time = (current_time * 1000 ) % 86400
+        # current_time = (current_time * 1000 ) % 86400
 
         hue = 0
         saturation = 0
@@ -207,8 +210,9 @@ def main():
         temperature = int(temp_over_time(current_time, sunrise, sunset))
         print(temperature, brightness)
 
-        lifx.set_color_all_lights([hue, saturation, brightness, temperature], 1000, True)
-
+        lifx.set_color_all_lights(
+            [hue, saturation, brightness, temperature], 1000, True
+        )
 
 
 if __name__ == "__main__":
