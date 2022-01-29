@@ -2,10 +2,10 @@
 # coding=utf-8
 import sys
 from time import sleep
-
 from lifxlan import LifxLAN, WHITE, BLUE
-
 from lifxlan.msgtypes import LightSetColor
+from gpiozero import Button
+
 
 def main():
     num_lights = None
@@ -14,6 +14,16 @@ def main():
         print("  python {} <number of lights on LAN>\n".format(sys.argv[0]))
     else:
         num_lights = int(sys.argv[1])
+
+
+    def say_hello():
+        print("hello")
+
+    a = Button(17)
+    a.when_pressed = say_hello
+    b = Button(27)
+    c = Button(22)
+
 
     # instantiate LifxLAN client, num_lights may be None (unknown).
     # In fact, you don't need to provide LifxLAN with the number of bulbs at all.
