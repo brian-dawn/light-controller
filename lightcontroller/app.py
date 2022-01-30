@@ -102,7 +102,7 @@ def set_color(
         )
     except Exception as e:
         # We might have lost connection, maybe retry?
-        pass
+        print(e)
 
 
 def any_button_press():
@@ -135,13 +135,16 @@ def light_toggle():
         state.saturation = 0
         state.temperature = sun_temperature
 
-    set_color(
-        hue=state.hue,
-        saturation=state.saturation,
-        brightness=state.brightness,
-        temperature=state.temperature,
-        duration=500,
-    )
+    # Try multiple times in case failure, button presses are important.
+    for _ in range(3):
+        set_color(
+            hue=state.hue,
+            saturation=state.saturation,
+            brightness=state.brightness,
+            temperature=state.temperature,
+            duration=500,
+        )
+        time.sleep(0.003)
 
 
 def party_mode():
