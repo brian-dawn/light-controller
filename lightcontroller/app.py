@@ -219,7 +219,7 @@ def main():
         state.hue = 0
         state.saturation = 0
         state.brightness = int(brightness_over_time(current_time, transition_seconds))
-        state.temperature = int(temp_over_time(current_time, transition_seconds * 3))
+        state.temperature = int(temp_over_time(current_time, transition_seconds))
         print(state.temperature, state.brightness)
 
         set_color(
