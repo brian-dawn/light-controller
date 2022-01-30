@@ -200,10 +200,9 @@ def main():
     # lifx.set_color_all_lights([hue, saturation, brightness, temperature ], 2000, True)
 
     while True:
-        sleep(1)
 
         # Party mode only lasts for an hour
-        while time() - state.party_start_time < 60 * 60:
+        if time() - state.party_start_time < 60 * 60:
             print("party time")
 
             state.hue = int(time() * 4000 % max_value)
@@ -219,6 +218,9 @@ def main():
                 duration=50,
             )
             sleep(50)
+            continue
+
+        sleep(1)
 
         # If we pressed a button and the cooldown time hasn't passed then we won't
         # update the sunlight.
