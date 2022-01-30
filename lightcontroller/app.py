@@ -219,8 +219,7 @@ def main():
                 temperature=state.temperature,
                 duration=150,
             )
-            sleep(.150)
-
+            sleep(0.150)
 
         # If we pressed a button and the cooldown time hasn't passed then we won't
         # update the sunlight.
