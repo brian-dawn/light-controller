@@ -144,7 +144,7 @@ def light_toggle():
             temperature=state.temperature,
             duration=500,
         )
-        time.sleep(0.003)
+        sleep(0.003)
 
 
 def party_mode():
