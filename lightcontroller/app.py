@@ -217,9 +217,9 @@ def main():
                 saturation=state.saturation,
                 brightness=state.brightness,
                 temperature=state.temperature,
-                duration=50,
+                duration=150,
             )
-            sleep(.05)
+            sleep(.150)
 
 
         # If we pressed a button and the cooldown time hasn't passed then we won't
