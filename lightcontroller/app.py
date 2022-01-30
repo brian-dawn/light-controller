@@ -94,11 +94,16 @@ def light_toggle():
     if brightness == 0:
         brightness = 65535
         saturation = 0
-        temperature = int(temp_over_time(seconds_since_midnight(), transition_seconds * 3))
+        temperature = int(
+            temp_over_time(seconds_since_midnight(), transition_seconds * 3)
+        )
     else:
         brightness = 0
 
-    lifx.set_color_all_lights([hue, saturation, brightness, temperature], 500, True)
+    try:
+        lifx.set_color_all_lights([hue, saturation, brightness, temperature], 500, True)
+    except e as Exception:
+        pass
 
 
 def party_mode():
@@ -209,9 +214,13 @@ def main():
             brightness = 65535
             temperature = 0
 
-            lifx.set_color_all_lights(
-                [hue, saturation, brightness, temperature], 1000, True
-            )
+            try:
+                lifx.set_color_all_lights(
+                    [hue, saturation, brightness, temperature], 1000, True
+                )
+            except e as Exception:
+                pass
+
             continue
 
         # If we pressed a button and the cooldown time hasn't passed then we won't
@@ -230,9 +239,12 @@ def main():
         temperature = int(temp_over_time(current_time, transition_seconds * 3))
         print(temperature, brightness)
 
-        lifx.set_color_all_lights(
-            [hue, saturation, brightness, temperature], 1000, True
-        )
+        try:
+            lifx.set_color_all_lights(
+                [hue, saturation, brightness, temperature], 1000, True
+            )
+        except e as Exception:
+            pass
 
 
 if __name__ == "__main__":
