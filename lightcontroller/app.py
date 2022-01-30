@@ -94,7 +94,7 @@ def light_toggle():
     if brightness == 0:
         brightness = 65535
         saturation = 0
-        temperature = int(temp_over_time(seconds_since_midnight(), sunrise, sunset))
+        temperature = int(temp_over_time(seconds_since_midnight(), transition_seconds * 3))
     else:
         brightness = 0
 
@@ -180,6 +180,7 @@ def brightness_over_time(seconds_since_midnight, transition_seconds):
 
 
 def main():
+    global hue, brightness, temperature
 
     # instantiate LifxLAN client, num_lights may be None (unknown).
     # In fact, you don't need to provide LifxLAN with the number of bulbs at all.
