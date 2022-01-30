@@ -115,8 +115,12 @@ def party_mode():
 
     # lifx.set_color_all_lights([hue, saturation, brightness, temperature], 500, True)
 
+
 def scale_between(unscaled, min_allowed, max_allowed, min_n, max_n):
-    return (max_allowed - min_allowed) * (unscaled - min_n) / (max_n - min_n) + min_allowed
+    return (max_allowed - min_allowed) * (unscaled - min_n) / (
+        max_n - min_n
+    ) + min_allowed
+
 
 def sunrise_temperature_over_time(seconds_since_midnight, transition_seconds):
 
@@ -127,8 +131,13 @@ def sunrise_temperature_over_time(seconds_since_midnight, transition_seconds):
         return sun_min_temp
 
     # Scale between the two.
-    return scale_between(seconds_since_midnight, sun_min_temp, sun_max_temp, sunrise - transition_seconds, sunset)
-
+    return scale_between(
+        seconds_since_midnight,
+        sun_min_temp,
+        sun_max_temp,
+        sunrise - transition_seconds,
+        sunset,
+    )
 
 
 def sunset_temperature_over_time(seconds_since_midnight, transition_seconds):
@@ -140,7 +149,13 @@ def sunset_temperature_over_time(seconds_since_midnight, transition_seconds):
         return sun_max_temp
 
     # Scale between the two.
-    return scale_between(seconds_since_midnight, sun_max_temp, sun_min_temp, sunset - transition_seconds, sunset)
+    return scale_between(
+        seconds_since_midnight,
+        sun_max_temp,
+        sun_min_temp,
+        sunset - transition_seconds,
+        sunset,
+    )
 
     # return (
     #     sun_max_temp
@@ -152,17 +167,14 @@ def sunset_temperature_over_time(seconds_since_midnight, transition_seconds):
 def temp_over_time(seconds_since_midnight, transition_seconds):
     return min(
         sunrise_temperature_over_time(seconds_since_midnight, transition_seconds),
-        sunset_temperature_over_time(seconds_since_midnight, transition_seconds)
+        sunset_temperature_over_time(seconds_since_midnight, transition_seconds),
     )
 
 
 def brightness_over_time(seconds_since_midnight, transition_seconds):
 
     return 65535 * (
-        (
-            temp_over_time(seconds_since_midnight, transition_seconds)
-            - sun_min_temp
-        )
+        (temp_over_time(seconds_since_midnight, transition_seconds) - sun_min_temp)
         / (sun_max_temp - sun_min_temp)
     )
 
