@@ -54,6 +54,10 @@ cooldown_time_in_seconds = 60 * 60  # one hour
 
 sun_max_temp = 4500
 sun_min_temp = 2500
+max_value = 65535
+
+# Brightness of turning on the light past sundown.
+dim_brightness = 10000
 
 
 def seconds_since_midnight() -> int:
@@ -74,9 +78,9 @@ lifx.set_power_all_lights(True)
 class State:
 
     # If a button toggle is pressed on or off it will put the sunrise/sunset on cooldown
-    hue = 0  # 0 to 65535
-    saturation = 0  # 0 to 65535
-    brightness = 0  # 0 to 65535
+    hue = 0  # 0 to max_value
+    saturation = 0  # 0 to max_value
+    brightness = 0  # 0 to max_value
     temperature = 2500  # 2500 to 9000
 
     # Whenever a user presses a button we won't apply sunrise/sunset.
@@ -96,7 +100,7 @@ def set_color(
         lifx.set_color_all_lights(
             [hue, saturation, brightness, temperature], duration, True
         )
-    except e as Exception:
+    except Exception as e:
         # We might have lost connection, maybe retry?
         pass
 
@@ -116,14 +120,20 @@ def light_toggle():
 
     # Add to cooldown.
     state.last_button_press_time = time()
+
+    sun_temperature = temp_over_time(seconds_since_midnight(), transition_seconds)
     if state.brightness == 0:
-        state.brightness = 65535
-        state.saturation = 0
-        state.temperature = int(
-            temp_over_time(seconds_since_midnight(), transition_seconds * 3)
+        # If it's at night turn it down just a tad.
+        state.brightness = max(
+            dim_brightness,
+            brightness_over_time(seconds_since_midnight(), transition_seconds),
         )
+        state.saturation = 0
+        state.temperature = sun_temperature
     else:
         state.brightness = 0
+        state.saturation = 0
+        state.temperature = sun_temperature
 
     set_color(
         hue=state.hue,
@@ -148,7 +158,7 @@ def temp_over_time(seconds_since_midnight: int, transition_seconds: int) -> int:
 
     # 0 to 1.
     intensity = sun.current_intensity(
-        sunrise, sunset, seconds_since_midnight, transition_seconds
+        sunrise, sunset - orange_duration, seconds_since_midnight, transition_seconds
     )
 
     return int(sun_min_temp + (sun_max_temp - sun_min_temp) * intensity)
@@ -159,12 +169,12 @@ def brightness_over_time(seconds_since_midnight: int, transition_seconds: int) -
     # 0 to 1.
     intensity = sun.current_intensity(
         sunrise,
-        sunset - orange_duration,
+        sunset,
         seconds_since_midnight,
         transition_seconds,
     )
 
-    return int(65535 * intensity)
+    return int(max_value * intensity)
 
 
 def main():
@@ -192,9 +202,9 @@ def main():
         if time() - state.party_start_time < 60 * 60:
             print("party time")
 
-            state.hue = int(time() * 4000 % 65535)
-            state.saturation = 65535
-            state.brightness = 65535
+            state.hue = int(time() * 4000 % max_value)
+            state.saturation = max_value
+            state.brightness = max_value
             state.temperature = 0
 
             set_color(
