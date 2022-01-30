@@ -42,7 +42,7 @@ print("sunrise: " + str(sunrise))
 print("sunset: " + str(sunset))
 
 
-transition_seconds = 60 * 30  # 30 minutes
+transition_seconds = 60 * 60  # 60 minutes
 
 # When a user presses a button we will stop doing sun updates.
 cooldown_time_in_seconds = 60 * 60  # one hour
