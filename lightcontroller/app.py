@@ -115,45 +115,52 @@ def party_mode():
 
     # lifx.set_color_all_lights([hue, saturation, brightness, temperature], 500, True)
 
+def scale_between(unscaled, min_allowed, max_allowed, min_n, max_n):
+    return (max_allowed - min_allowed) * (unscaled - min_n) / (max_n - min_n) + min_allowed
 
-def sunrise_temperature_over_time(seconds_since_midnight, sunrise_time):
+def sunrise_temperature_over_time(seconds_since_midnight, transition_seconds):
 
-    inner = (seconds_since_midnight - sunrise_time) / (
-        transition_seconds / (2 * math.pi)
-    )
-
-    if inner < -math.pi:
-        return sun_min_temp
-
-    if inner > 0:
+    if seconds_since_midnight >= sunrise:
         return sun_max_temp
 
-    v = (sun_max_temp - sun_min_temp) * math.cos(inner) + sun_min_temp
+    if seconds_since_midnight <= sunrise - transition_seconds:
+        return sun_min_temp
 
-    return max(sun_min_temp, min(v, sun_max_temp))
-
-
-def sunset_temperature_over_time(seconds_since_midnight, sunset_seconds):
-
-    return (
-        sun_max_temp
-        - sunrise_temperature_over_time(seconds_since_midnight, sunset_seconds)
-        + sun_min_temp
-    )
+    # Scale between the two.
+    return scale_between(seconds_since_midnight, sun_min_temp, sun_max_temp, sunrise - transition_seconds, sunset)
 
 
-def temp_over_time(seconds_since_midnight, sunrise_seconds, sunset_seconds):
+
+def sunset_temperature_over_time(seconds_since_midnight, transition_seconds):
+
+    if seconds_since_midnight >= sunset:
+        return sun_min_temp
+
+    if seconds_since_midnight <= sunset - transition_seconds:
+        return sun_max_temp
+
+    # Scale between the two.
+    return scale_between(seconds_since_midnight, sun_max_temp, sun_min_temp, sunset - transition_seconds, sunset)
+
+    # return (
+    #     sun_max_temp
+    #     - sunrise_temperature_over_time(seconds_since_midnight, sunset_seconds)
+    #     + sun_min_temp
+    # )
+
+
+def temp_over_time(seconds_since_midnight, transition_seconds):
     return min(
-        sunrise_temperature_over_time(seconds_since_midnight, sunrise_seconds*2),
-        sunset_temperature_over_time(seconds_since_midnight, sunset_seconds*2),
+        sunrise_temperature_over_time(seconds_since_midnight, transition_seconds),
+        sunset_temperature_over_time(seconds_since_midnight, transition_seconds)
     )
 
 
-def brightness_over_time(seconds_since_midnight, sunrise_seconds, sunset_seconds):
+def brightness_over_time(seconds_since_midnight, transition_seconds):
 
     return 65535 * (
         (
-            temp_over_time(seconds_since_midnight, sunrise_seconds, sunset_seconds)
+            temp_over_time(seconds_since_midnight, transition_seconds)
             - sun_min_temp
         )
         / (sun_max_temp - sun_min_temp)
@@ -206,8 +213,8 @@ def main():
 
         hue = 0
         saturation = 0
-        brightness = int(brightness_over_time(current_time, sunrise, sunset))
-        temperature = int(temp_over_time(current_time, sunrise, sunset))
+        brightness = int(brightness_over_time(current_time, transition_seconds))
+        temperature = int(temp_over_time(current_time, transition_seconds * 3))
         print(temperature, brightness)
 
         lifx.set_color_all_lights(
