@@ -14,8 +14,8 @@ from lifxlan.msgtypes import LightSetColor
 from gpiozero import Button
 
 
-
 from lightcontroller import sun
+
 
 def parse_time(s: str) -> int:
     """
