@@ -144,8 +144,8 @@ def sunset_temperature_over_time(seconds_since_midnight, sunset_seconds):
 
 def temp_over_time(seconds_since_midnight, sunrise_seconds, sunset_seconds):
     return min(
-        sunrise_temperature_over_time(seconds_since_midnight, sunrise_seconds),
-        sunset_temperature_over_time(seconds_since_midnight, sunset_seconds),
+        sunrise_temperature_over_time(seconds_since_midnight, sunrise_seconds*2),
+        sunset_temperature_over_time(seconds_since_midnight, sunset_seconds*2),
     )
 
 
