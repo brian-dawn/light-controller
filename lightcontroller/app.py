@@ -2,7 +2,9 @@
 # coding=utf-8
 
 
+from dataclasses import dataclass
 from datetime import datetime
+from re import S
 import sys
 import math
 import random
@@ -10,6 +12,8 @@ from time import sleep, time
 from lifxlan import LifxLAN, WHITE, BLUE
 from lifxlan.msgtypes import LightSetColor
 from gpiozero import Button
+
+import sun
 
 
 def parse_time(s: str) -> int:
@@ -43,6 +47,7 @@ print("sunset: " + str(sunset))
 
 
 transition_seconds = 60 * 60  # 60 minutes
+orange_duration = 60 * 60 * 2  # 2 hours, we turn orange at night to prepare for sleep.
 
 # When a user presses a button we will stop doing sun updates.
 cooldown_time_in_seconds = 60 * 60  # one hour
@@ -64,128 +69,106 @@ lifx = LifxLAN()
 print("Discovering lights...")
 lifx.set_power_all_lights(True)
 
-# If a button toggle is pressed on or off it will put the sunrise/sunset on cooldown
-hue = 0  # 0 to 65535
-saturation = 0  # 0 to 65535
-brightness = 0  # 0 to 65535
-temperature = 2500  # 2500 to 9000
+
+@dataclass
+class State:
+
+    # If a button toggle is pressed on or off it will put the sunrise/sunset on cooldown
+    hue = 0  # 0 to 65535
+    saturation = 0  # 0 to 65535
+    brightness = 0  # 0 to 65535
+    temperature = 2500  # 2500 to 9000
+
+    # Whenever a user presses a button we won't apply sunrise/sunset.
+    last_button_press_time = 0
+
+    party_start_time = 0
 
 
-# Whenever a user presses a button we won't apply sunrise/sunset.
-last_button_press_time = 0
+state = State()
 
-party_start_time = 0
+
+def set_color(
+    hue: int, saturation: int, brightness: int, temperature: int, duration: int
+):
+
+    try:
+        lifx.set_color_all_lights(
+            [hue, saturation, brightness, temperature], duration, True
+        )
+    except e as Exception:
+        # We might have lost connection, maybe retry?
+        pass
 
 
 def any_button_press():
     """
     Reset state
     """
-    global party_start_time
-    party_start_time = 0
+    global state
+    state.party_start_time = 0
 
 
 def light_toggle():
-    global brightness, saturation, hue, temperature, last_button_press_time
+    global state
 
     any_button_press()
 
-    last_button_press_time = time()
-    if brightness == 0:
-        brightness = 65535
-        saturation = 0
-        temperature = int(
+    # Add to cooldown.
+    state.last_button_press_time = time()
+    if state.brightness == 0:
+        state.brightness = 65535
+        state.saturation = 0
+        state.temperature = int(
             temp_over_time(seconds_since_midnight(), transition_seconds * 3)
         )
     else:
-        brightness = 0
+        state.brightness = 0
 
-    try:
-        lifx.set_color_all_lights([hue, saturation, brightness, temperature], 500, True)
-    except e as Exception:
-        pass
+    set_color(
+        hue=state.hue,
+        saturation=state.saturation,
+        brightness=state.brightness,
+        temperature=state.temperature,
+        duration=500,
+    )
 
 
 def party_mode():
-    global party_start_time
-    global brightness, saturation, hue, temperature, last_button_press_time
+
+    global state
 
     any_button_press()
 
-    party_start_time = time()
-    last_button_press_time = time()
-    # hue = random.randint(0, 65535)  # 0 to 65535
-    # saturation = 65535  # 0 to 65535
-    # brightness = 65535  # 0 to 65535
-
-    # lifx.set_color_all_lights([hue, saturation, brightness, temperature], 500, True)
+    state.party_start_time = time()
+    state.last_button_press_time = time()
 
 
-def scale_between(unscaled, min_allowed, max_allowed, min_n, max_n):
-    return (max_allowed - min_allowed) * (unscaled - min_n) / (
-        max_n - min_n
-    ) + min_allowed
+def temp_over_time(seconds_since_midnight: int, transition_seconds: int) -> int:
+
+    # 0 to 1.
+    intensity = sun.current_intensity(
+        sunrise, sunset, seconds_since_midnight, transition_seconds
+    )
+
+    return int(sun_min_temp + (sun_max_temp - sun_min_temp) * intensity)
 
 
-def sunrise_temperature_over_time(seconds_since_midnight, transition_seconds):
+def brightness_over_time(seconds_since_midnight: int, transition_seconds: int) -> int:
 
-    if seconds_since_midnight >= sunrise:
-        return sun_max_temp
-
-    if seconds_since_midnight <= sunrise - transition_seconds:
-        return sun_min_temp
-
-    # Scale between the two.
-    return scale_between(
+    # 0 to 1.
+    intensity = sun.current_intensity(
+        sunrise,
+        sunset - orange_duration,
         seconds_since_midnight,
-        sun_min_temp,
-        sun_max_temp,
-        sunrise - transition_seconds,
-        sunset,
+        transition_seconds,
     )
 
-
-def sunset_temperature_over_time(seconds_since_midnight, transition_seconds):
-
-    if seconds_since_midnight >= sunset:
-        return sun_min_temp
-
-    if seconds_since_midnight <= sunset - transition_seconds:
-        return sun_max_temp
-
-    # Scale between the two.
-    return scale_between(
-        seconds_since_midnight,
-        sun_max_temp,
-        sun_min_temp,
-        sunset - transition_seconds,
-        sunset,
-    )
-
-    # return (
-    #     sun_max_temp
-    #     - sunrise_temperature_over_time(seconds_since_midnight, sunset_seconds)
-    #     + sun_min_temp
-    # )
-
-
-def temp_over_time(seconds_since_midnight, transition_seconds):
-    return min(
-        sunrise_temperature_over_time(seconds_since_midnight, transition_seconds),
-        sunset_temperature_over_time(seconds_since_midnight, transition_seconds),
-    )
-
-
-def brightness_over_time(seconds_since_midnight, transition_seconds):
-
-    return 65535 * (
-        (temp_over_time(seconds_since_midnight, transition_seconds) - sun_min_temp)
-        / (sun_max_temp - sun_min_temp)
-    )
+    return int(65535 * intensity)
 
 
 def main():
-    global hue, brightness, temperature
+    global state
 
     # instantiate LifxLAN client, num_lights may be None (unknown).
     # In fact, you don't need to provide LifxLAN with the number of bulbs at all.
@@ -206,26 +189,26 @@ def main():
         sleep(1)
 
         # Party mode only lasts for an hour
-        if time() - party_start_time < 60 * 60:
+        if time() - state.party_start_time < 60 * 60:
             print("party time")
 
-            hue = int(time() * 4000 % 65535)
-            saturation = 65535
-            brightness = 65535
-            temperature = 0
+            state.hue = int(time() * 4000 % 65535)
+            state.saturation = 65535
+            state.brightness = 65535
+            state.temperature = 0
 
-            try:
-                lifx.set_color_all_lights(
-                    [hue, saturation, brightness, temperature], 1000, True
-                )
-            except e as Exception:
-                pass
-
+            set_color(
+                hue=state.hue,
+                saturation=state.saturation,
+                brightness=state.brightness,
+                temperature=state.temperature,
+                duration=500,
+            )
             continue
 
         # If we pressed a button and the cooldown time hasn't passed then we won't
         # update the sunlight.
-        if time() - last_button_press_time < cooldown_time_in_seconds:
+        if time() - state.last_button_press_time < cooldown_time_in_seconds:
 
             continue
 
@@ -233,18 +216,19 @@ def main():
         current_time = seconds_since_midnight()
         # current_time = (current_time * 1000 ) % 86400
 
-        hue = 0
-        saturation = 0
-        brightness = int(brightness_over_time(current_time, transition_seconds))
-        temperature = int(temp_over_time(current_time, transition_seconds * 3))
-        print(temperature, brightness)
+        state.hue = 0
+        state.saturation = 0
+        state.brightness = int(brightness_over_time(current_time, transition_seconds))
+        state.temperature = int(temp_over_time(current_time, transition_seconds * 3))
+        print(state.temperature, state.brightness)
 
-        try:
-            lifx.set_color_all_lights(
-                [hue, saturation, brightness, temperature], 1000, True
-            )
-        except e as Exception:
-            pass
+        set_color(
+            hue=state.hue,
+            saturation=state.saturation,
+            brightness=state.brightness,
+            temperature=state.temperature,
+            duration=1000,
+        )
 
 
 if __name__ == "__main__":
