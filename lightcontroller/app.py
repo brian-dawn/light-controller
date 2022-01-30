@@ -203,7 +203,7 @@ def main():
         sleep(1)
 
         # Party mode only lasts for an hour
-        if time() - state.party_start_time < 60 * 60:
+        while time() - state.party_start_time < 60 * 60:
             print("party time")
 
             state.hue = int(time() * 4000 % max_value)
@@ -216,9 +216,9 @@ def main():
                 saturation=state.saturation,
                 brightness=state.brightness,
                 temperature=state.temperature,
-                duration=500,
+                duration=50,
             )
-            continue
+            sleep(50)
 
         # If we pressed a button and the cooldown time hasn't passed then we won't
         # update the sunlight.
