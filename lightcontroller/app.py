@@ -60,6 +60,21 @@ max_value = 65535
 # Brightness of turning on the light past sundown.
 dim_brightness = 10000
 
+temps_for_toggling = [
+    2500,
+    3000,
+    3500,
+    4000,
+    4500,
+    5000,
+    5500,
+    6000,
+    6500,
+    7000,
+    7500,
+    8000,
+]
+
 
 def seconds_since_midnight() -> int:
 
@@ -89,6 +104,8 @@ class State:
 
     party_mode = False
 
+    temp_toggle_index = 0
+
 
 state = State()
 
@@ -112,6 +129,32 @@ def any_button_press():
     """
     global state
     state.party_mode = False
+
+
+def toggle_temp():
+    global state
+
+    any_button_press()
+
+    # Add to cooldown.
+    state.last_button_press_time = time()
+
+    state.brightness = max_value
+    state.saturation = 0
+    state.hue = 0
+    state.temperature = temps_for_toggling[state.temp_toggle_index]
+    state.temp_toggle_index = (state.temp_toggle_index + 1) % len(temps_for_toggling)
+
+    # Try multiple times in case failure, button presses are important.
+    for _ in range(3):
+        set_color(
+            hue=state.hue,
+            saturation=state.saturation,
+            brightness=state.brightness,
+            temperature=state.temperature,
+            duration=500,
+        )
+        sleep(0.003)
 
 
 def light_toggle():
@@ -194,7 +237,7 @@ def main():
     c = Button(22, pull_up=False)
 
     c.when_pressed = light_toggle
-    # b.when_pressed = lights_on
+    b.when_pressed = toggle_temp
     a.when_pressed = party_mode
 
     # lifx.set_color_all_lights([hue, saturation, brightness, temperature ], 2000, True)
