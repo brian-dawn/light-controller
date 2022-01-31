@@ -87,7 +87,7 @@ class State:
     # Whenever a user presses a button we won't apply sunrise/sunset.
     last_button_press_time = 0
 
-    party_start_time = 0
+    party_mode = False
 
 
 state = State()
@@ -111,7 +111,7 @@ def any_button_press():
     Reset state
     """
     global state
-    state.party_start_time = 0
+    state.party_mode = False
 
 
 def light_toggle():
@@ -154,7 +154,7 @@ def party_mode():
 
     any_button_press()
 
-    state.party_start_time = time()
+    state.party_mode = True
     state.last_button_press_time = time()
 
 
@@ -204,7 +204,7 @@ def main():
         sleep(1)
 
         # Party mode only lasts for an hour
-        while time() - state.party_start_time < 60 * 60:
+        while state.party_mode:
             print("party time")
 
             state.hue = int(time() * 4000 % max_value)
@@ -220,6 +220,13 @@ def main():
                 duration=150,
             )
             sleep(0.150)
+
+        # If we are past sunrise and before sunset begins we will disable sunrise/sunset.
+        if (
+            seconds_since_midnight() > sunrise + 5
+            and seconds_since_midnight() < sunset - transition_seconds
+        ):
+            continue
 
         # If we pressed a button and the cooldown time hasn't passed then we won't
         # update the sunlight.
