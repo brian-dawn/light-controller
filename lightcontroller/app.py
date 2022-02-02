@@ -243,7 +243,7 @@ def main():
         while state.party_mode:
             print("party time")
 
-            state.hue = int(time() * 4000 % max_value)
+            state.hue = int(time() * 1000 % max_value)
             state.saturation = max_value
             state.brightness = max_value
             state.temperature = 0
