@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # coding=utf-8
 
-
-from threading import Thread
 from dataclasses import dataclass
 from datetime import datetime
 from re import S
@@ -52,7 +50,7 @@ transition_seconds = 60 * 30  # 30 minutes
 orange_duration = 60 * 60 * 2  # 2 hours, we turn orange at night to prepare for sleep.
 
 # When a user presses a button we will stop doing sun updates.
-cooldown_time_in_seconds = 60 * 60  # one hour
+cooldown_time_in_seconds = 30 * 60  # 30 minutes
 
 sun_max_temp = 4500
 sun_min_temp = 2500
@@ -149,12 +147,6 @@ def toggle_temp():
             duration=500,
         )
         sleep(0.003)
-
-def power_on():
-    fn = lambda: lifx.set_power_all_lights(True)
-
-    thread = Thread(target = fn)
-
 
 def light_toggle():
     global state
@@ -287,7 +279,7 @@ def main():
         if state.brightness == 0 and new_brightness > 0:
             print("Making sure power is on just before sunrise.")
             # Make sure power is enabled.
-            power_on()
+            lifx.set_power_all_lights(True)
 
         state.brightness = new_brightness
         state.temperature = int(temp_over_time(current_time, transition_seconds))
