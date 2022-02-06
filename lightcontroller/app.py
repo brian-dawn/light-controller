@@ -148,6 +148,7 @@ def toggle_temp():
         )
         sleep(0.003)
 
+
 def light_toggle():
     global state
 
