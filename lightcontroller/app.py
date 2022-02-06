@@ -2,6 +2,7 @@
 # coding=utf-8
 
 
+from threading import Thread
 from dataclasses import dataclass
 from datetime import datetime
 from re import S
@@ -149,6 +150,11 @@ def toggle_temp():
         )
         sleep(0.003)
 
+def power_on():
+    fn = lambda: lifx.set_power_all_lights(True)
+
+    thread = Thread(target = fn)
+
 
 def light_toggle():
     global state
@@ -276,7 +282,14 @@ def main():
 
         state.hue = 0
         state.saturation = 0
-        state.brightness = int(brightness_over_time(current_time, transition_seconds))
+        new_brightness = int(brightness_over_time(current_time, transition_seconds))
+
+        if state.brightness == 0 and new_brightness > 0:
+            print("Making sure power is on just before sunrise.")
+            # Make sure power is enabled.
+            power_on()
+
+        state.brightness = new_brightness
         state.temperature = int(temp_over_time(current_time, transition_seconds))
         print(state.temperature, state.brightness)
 
