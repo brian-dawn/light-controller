@@ -46,7 +46,7 @@ print("sunrise: " + str(sunrise))
 print("sunset: " + str(sunset))
 
 
-transition_seconds = 60 * 30  # 30 minutes
+transition_seconds = 60 * 10  # 10 minutes
 orange_duration = 60 * 60 * 2  # 2 hours, we turn orange at night to prepare for sleep.
 
 # When a user presses a button we will stop doing sun updates.
@@ -259,7 +259,7 @@ def main():
         # If we are past sunrise and before sunset begins we will disable sunrise/sunset.
         if (
             seconds_since_midnight() > sunrise + 5
-            and seconds_since_midnight() < sunset - transition_seconds
+            and seconds_since_midnight() < sunset - orange_duration
         ):
             continue
 
