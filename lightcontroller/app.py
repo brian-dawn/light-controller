@@ -50,7 +50,7 @@ transition_seconds = 60 * 30  # 30 minutes
 orange_duration = 60 * 60 * 2  # 2 hours, we turn orange at night to prepare for sleep.
 
 # When a user presses a button we will stop doing sun updates.
-cooldown_time_in_seconds = 10 * 60  # 10 minutes
+cooldown_time_in_seconds = 3 * 60 * 60  # 3 hours
 
 sun_max_temp = 4500
 sun_min_temp = 2500
