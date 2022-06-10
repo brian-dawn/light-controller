@@ -74,7 +74,7 @@ def seconds_since_midnight() -> int:
     seconds_since_midnight = (
         now - now.replace(hour=0, minute=0, second=0, microsecond=0)
     ).total_seconds()
-    return seconds_since_midnight
+    return int(seconds_since_midnight)
 
 
 lifx = LifxLAN()
@@ -129,7 +129,7 @@ def toggle_temp():
     any_button_press()
 
     # Add to cooldown.
-    state.last_button_press_time = time()
+    state.last_button_press_time = int(time())
 
     state.brightness = max_value
     state.saturation = 0
@@ -155,7 +155,7 @@ def light_toggle():
     any_button_press()
 
     # Add to cooldown.
-    state.last_button_press_time = time()
+    state.last_button_press_time = int(time())
 
     sun_temperature = temp_over_time(seconds_since_midnight(), transition_seconds)
     if state.brightness == 0:
@@ -190,7 +190,7 @@ def party_mode():
     any_button_press()
 
     state.party_mode = True
-    state.last_button_press_time = time()
+    state.last_button_press_time = int(time())
 
 
 def temp_over_time(seconds_since_midnight: int, transition_seconds: int) -> int:
